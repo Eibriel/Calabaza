@@ -1,0 +1,23 @@
+{
+"name": "Calabaza",
+"description": "Virtual calabaza",
+
+"launch_path": "/cal",
+"icons": {
+"512" : "/cal/icon_512.png",
+"128" : "/cal/icon_128.png",
+"60" : "/cal/icon_60.png"
+},
+
+"type": "web",
+"developer": {
+"name": "Eibriel",
+"url" : "http://www.eibriel.com"
+},
+
+"default_locale": "es",
+"fullscreen": "true",
+
+"version": "0.1"
+
+}

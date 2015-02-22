@@ -1,0 +1,29 @@
+<html>
+  <body>
+    <p>Hosted app installation page</p>
+    <script>
+    var manifestUrl = 'http://rdany.org/cal/manifest.webapp';
+    var req = navigator.mozApps.install(manifestUrl);
+    req.onsuccess = function() {
+        alert(this.result.origin);
+    };
+    req.onerror = function() {
+        alert(this.error.name);
+    };
+
+    var request = window.navigator.mozApps.checkInstalled(manifestUrl);
+    request.onerror = function(e) {
+        alert("Error calling checkInstalled: " + request.error.name);
+    };
+    request.onsuccess = function(e) {
+        if (request.result) {
+            console.log("App is installed!");
+        }
+        else {
+            console.log("App is not installed!");
+        }
+    };
+
+    </script>
+  </body>
+</html>

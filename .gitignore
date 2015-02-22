@@ -52,3 +52,9 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# VIM stuff
+.ropeproject/
+
+# Secret
+secret_key.py
