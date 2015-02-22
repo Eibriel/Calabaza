@@ -57,4 +57,4 @@ target/
 .ropeproject/
 
 # Secret
-secret_key.py
+calabaza_auth.py
