@@ -1,6 +1,8 @@
 # Calabaza
 Calabaza interactive game
 
+![Calabaza](server/calabaza/static/icons/icon_128.png)
+
 ## Installing
 
 * mkdir venv
