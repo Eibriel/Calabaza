@@ -58,13 +58,16 @@ class health():
 
 class calabaza():
     body = {}
+    external = {}
 
-    def __init__(self, weather):
-        self.body['weather'] = weather
+    def __init__(self):
         self.body['energy'] = energy()
         self.body['alpha_status'] = alpha_status()
         self.body['expresion'] = expresion()
         self.body['health'] = health()
+
+    def add_external(self, name, data):
+        self.external[name] = data
 
     def tick(self):
         for mod in self.body:

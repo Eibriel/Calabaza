@@ -1,10 +1,17 @@
-import requests
 import json
+import logging
+import requests
 
-from calabaza.modules.mongoKit import *
+from calabaza.modules.mongoKit import Document
+from requests.exceptions import Timeout
 
 from pymongo import MongoClient
-from pymongo.errors import DuplicateKeyError
+from pymongo.errors import OperationFailure
+# from pymongo.errors import DuplicateKeyError
+
+from datetime import datetime
+from datetime import timedelta
+
 
 class weather():
     light_rain = [200, 201, 210, 230, 300, 310, 500, 520]
@@ -32,6 +39,9 @@ class weather():
     temperature = None
     wind_speed = None
     clouds = None
+
+    def __init__(self, city_id):
+        self.city_id = city_id
 
     def code_to_water(self, code):
         if code in self.light_rain:
@@ -64,14 +74,16 @@ class weather():
         return self.CLEAR
 
     def check_weather(self):
-        self.city_id = 2759794
         url = "http://api.openweathermap.org/data/2.5/weather?id={0}".format(
             self.city_id
         )
-        r = requests.get(url, timeout=1)
+        try:
+            r = requests.get(url, timeout=1)
+        except Timeout:
+            logging.warning('ConnectionTimeout: {0}'.format(url))
         if not r:
-            return
-        response = json.loads(r.text)
+            return False
+        response = r.json()
         # print (response)
 
         self.city_id = response['id']
@@ -82,7 +94,20 @@ class weather():
         self.wind_speed = response['wind']['speed']
         self.clouds = response['clouds']['all']
 
+        return True
+
     def get(self):
+        client = MongoClient()
+        db = client.calabaza
+        dbdata = db.weather.find_one({"city_id": self.city_id})
+        if dbdata:
+            self.latitude = dbdata['latitude']
+            self.longitude = dbdata['longitude']
+            self.weather_id = dbdata['weather_id']
+            self.temperature = dbdata['temperature']
+            self.wind_speed = dbdata['wind_speed']
+            self.clouds = dbdata['clouds']
+
         data = {
             'city_id': self.city_id,
             'latitude': self.latitude,
@@ -94,7 +119,13 @@ class weather():
         }
         return data
 
-    def tick(self, calabaza):
+    def tick(self):
+        client = MongoClient()
+        db = client.calabaza
+        data = db.weather.find_one({"city_id": self.city_id})
+        if datetime.now() - data['timestamp'] > timedelta(minutes=5):
+            if self.check_weather():
+                self.save()
         return
 
     def save(self):
@@ -102,32 +133,40 @@ class weather():
         db = client.calabaza
         db.weather.create_index("city_id", name="unique_city", unique=True)
 
-        data = db.weather.find_one({"city_id":self.city_id})
+        data = db.weather.find_one({"city_id": self.city_id})
 
         newdata = weatherModel()
         newdata['city_id'] = self.city_id
-        newdata['latitude'] =self.latitude
+        newdata['latitude'] = self.latitude
         newdata['longitude'] = self.longitude
         newdata['weather_id'] = self.weather_id
         newdata['temperature'] = self.temperature
         newdata['wind_speed'] = self.wind_speed
         newdata['clouds'] = self.clouds
+        newdata['timestamp'] = datetime.now()
 
         if data:
-            key = {"city_id":self.city_id}
-            db.weather.update(key, {'$set':newdata.safe()})
-
+            key = {"city_id": self.city_id}
+            print (newdata.safe())
+            try:
+                db.weather.update(key, {'$set': newdata.safe()})
+            except OperationFailure:
+                logging.error("OperationFailure")
+        else:
+            db.weather.insert(newdata.safe())
 
 
 def min_max_val(min_, max_):
     def validate(value):
-        return value >= -min_ and value <= max_
+        return value >= min_ and value <= max_
     return validate
+
 
 def any_val():
     def validate(value):
         return True
     return validate
+
 
 class weatherModel(Document):
     structure = {
@@ -137,7 +176,8 @@ class weatherModel(Document):
         'weather_id': int,
         'temperature': float,
         'wind_speed': float,
-        'clouds': float
+        'clouds': float,
+        'timestamp': int
     }
 
     validators = {
@@ -147,7 +187,8 @@ class weatherModel(Document):
         'weather_id': any_val(),
         'temperature': min_max_val(-100.0, 100.0),
         'wind_speed': any_val(),
-        'clouds': min_max_val(0, 100)
+        'clouds': min_max_val(0, 100),
+        'timestamp': any_val()
     }
 
     use_dot_notation = True
