@@ -3,28 +3,17 @@ from flask.ext.pymongo import PyMongo
 from flask.ext.restful import Api
 
 from calabaza.calabaza_auth import CalabazaAuth
+from calabaza.modules.calabaza_game import calabaza_game
+from calabaza.modules.mongoKit import *
 
 app = Flask(__name__)
 
 api = Api(app)
 mongo = PyMongo(app)
+game = calabaza_game()
 
 app.secret_key = CalabazaAuth.flask_key
 
-class Connection():
-    def register(self, documents):
-        pass
-
-class Document():
-    _data = {}
-    def __setitem__(self, key, value):
-        print (key)
-        if self.structure.get(key) and self.validators.get(key)(value):
-            self._data[key] = value
-            print(value)
-
-    def safe(self):
-        return self._data
 
 def max_length(length):
     def validate(value):
@@ -32,6 +21,7 @@ def max_length(length):
             return True
         raise Exception('%s must be at most %s characters long' % length)
     return validate
+
 
 class userModel(Document):
     structure = {
@@ -49,7 +39,7 @@ class userModel(Document):
     use_dot_notation = True
 
     def __repr__(self):
-        return '<User %r>' % (self.name)
+        return '<User {0}>'.format(self.name)
 
 connection = Connection()
 connection.register([userModel])

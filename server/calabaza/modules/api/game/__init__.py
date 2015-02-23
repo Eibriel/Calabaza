@@ -7,8 +7,7 @@ from flask.ext.restful import Resource
 from calabaza import mongo
 from calabaza import connection
 from calabaza import userModel
-
-from calabaza.modules.calabaza_game import calabaza_game
+from calabaza import game
 
 
 # class MongoConnection():
@@ -28,13 +27,28 @@ class GameListApi(Resource):
 
         #print (user.safe())
 
+        game.tick()
+
+        game_data = game.get()
+
+        print (game_data)
+
+        anim = "animb"
+        if game_data.get('expresion') == game.mod('expresion').OK:
+            face = "static/faces/calabaza_bien_anim.gif"
+            anim = "anima"
+
+        skin = "static/health/calabaza_saludok.gif"
+        if game_data.get('health') < 50.0:
+            skin = "static/health/calabaza_pachucho.gif"
+
         images = [
             "static/weather/calabaza_nubes.gif",
             "static/weather/calabaza_llovizna.gif",
             "static/ground/calabaza_tierra_normal.gif",
             "static/base/calabaza_base.gif",
-            "static/health/calabaza_pachucho.gif",
-            "static/faces/calabaza_durmiendo_anim.gif",
+            skin,
+            face,
             "calabaza_gorro_navidad.gif"
         ]
 
@@ -42,7 +56,7 @@ class GameListApi(Resource):
             "image":images,
             "text":"113",
             "background":"rgb(3, 24, 17)",
-            "anim":"animb"
+            "anim":anim
         }
 
         return resp, 200
